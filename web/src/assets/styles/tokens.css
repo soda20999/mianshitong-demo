@@ -1,0 +1,133 @@
+:root {
+  --anthropic-near-black: #141413;
+  --terracotta-brand: #c96442;
+  --coral-accent: #d97757;
+  --error-crimson: #b53333;
+  --focus-blue: #3898ec;
+
+  --parchment: #f5f4ed;
+  --ivory: #faf9f5;
+  --pure-white: #ffffff;
+  --warm-sand: #e8e6dc;
+  --warm-sand-hover: #efece2;
+  --warm-muted: #ebe9e1;
+  --dark-surface: #30302e;
+  --deep-dark: #141413;
+
+  --charcoal-warm: #4d4c48;
+  --olive-gray: #5e5d59;
+  --stone-gray: #87867f;
+  --dark-warm: #3d3d3a;
+  --warm-silver: #b0aea5;
+
+  --border-cream: #f0eee6;
+  --border-warm: #e8e6dc;
+  --border-dark: #30302e;
+  --border-muted: #d6d3ca;
+  --ring-warm: #d1cfc5;
+  --ring-subtle: #dedc01;
+  --ring-deep: #c2c0b6;
+
+  --font-serif: Georgia, "Times New Roman", serif;
+  --font-sans: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: Consolas, "Courier New", monospace;
+
+  --hero-size: clamp(2.25rem, 5vw, 4rem);
+  --section-size: clamp(2rem, 4.2vw, 3.25rem);
+  --subhead-size: clamp(1.55rem, 3vw, 2rem);
+  --body-large: 1.25rem;
+  --body-normal: 1rem;
+  --body-small: 0.9375rem;
+  --caption: 0.875rem;
+
+  --radius-small: 8px;
+  --radius-medium: 12px;
+  --radius-large: 16px;
+  --radius-xlarge: 24px;
+  --radius-hero: 32px;
+
+  --shadow-ring: 0 0 0 1px var(--ring-warm);
+  --shadow-ring-deep: 0 0 0 1px var(--ring-deep);
+  --shadow-whisper: rgba(0, 0, 0, 0.05) 0 4px 24px;
+  --shadow-inset: inset 0 0 0 1px rgba(20, 20, 19, 0.15);
+  --shadow-lift: var(--shadow-ring), var(--shadow-whisper);
+
+  --motion-fast: 180ms;
+  --motion-medium: 260ms;
+  --motion-slow: 420ms;
+  --motion-ease: cubic-bezier(0.2, 0.72, 0.25, 1);
+
+  --content-max: 1200px;
+
+  --el-color-primary-rgb: 201, 100, 66;
+  --el-color-primary-light-3: #d78568;
+  --el-color-primary-light-5: #e4ab97;
+  --el-color-primary-light-7: #efd1c5;
+  --el-color-primary-light-8: #f4e0d8;
+  --el-color-primary-light-9: #f8efeb;
+  --el-color-primary-dark-2: #a85035;
+
+  --el-color-success-rgb: 201, 100, 66;
+  --el-color-success-light-3: #d78568;
+  --el-color-success-light-5: #e4ab97;
+  --el-color-success-light-7: #efd1c5;
+  --el-color-success-light-8: #f4e0d8;
+  --el-color-success-light-9: #f8efeb;
+  --el-color-success-dark-2: #a85035;
+
+  --el-color-warning-rgb: 217, 119, 87;
+  --el-color-warning-light-3: #e09a82;
+  --el-color-warning-light-5: #e8b9a7;
+  --el-color-warning-light-7: #f0d7cc;
+  --el-color-warning-light-8: #f4e3dc;
+  --el-color-warning-light-9: #f9f0ec;
+  --el-color-warning-dark-2: #ae5f46;
+
+  --el-color-danger-rgb: 181, 51, 51;
+  --el-color-danger-light-3: #c46666;
+  --el-color-danger-light-5: #d18f8f;
+  --el-color-danger-light-7: #dfb8b8;
+  --el-color-danger-light-8: #e8d0d0;
+  --el-color-danger-light-9: #f4ebeb;
+  --el-color-danger-dark-2: #8f2929;
+
+  --el-color-info-rgb: 135, 134, 127;
+  --el-color-info-light-3: #a8a79f;
+  --el-color-info-light-5: #bcbbb5;
+  --el-color-info-light-7: #d1d0ca;
+  --el-color-info-light-8: #dfded9;
+  --el-color-info-light-9: #efeee9;
+  --el-color-info-dark-2: #6c6b65;
+
+  --el-color-primary: var(--terracotta-brand);
+  --el-color-success: var(--terracotta-brand);
+  --el-color-warning: var(--coral-accent);
+  --el-color-danger: var(--error-crimson);
+  --el-color-info: var(--stone-gray);
+  --el-bg-color: var(--pure-white);
+  --el-bg-color-page: var(--parchment);
+  --el-bg-color-overlay: var(--pure-white);
+  --el-text-color-primary: var(--anthropic-near-black);
+  --el-text-color-regular: var(--olive-gray);
+  --el-text-color-secondary: var(--stone-gray);
+  --el-text-color-placeholder: #9f9b91;
+  --el-text-color-disabled: #b7b3aa;
+  --el-border-color: var(--border-cream);
+  --el-border-color-light: var(--border-cream);
+  --el-border-color-lighter: #f4f1ea;
+  --el-border-color-extra-light: #f8f6f0;
+  --el-border-color-hover: var(--ring-warm);
+  --el-fill-color: #f1efe6;
+  --el-fill-color-light: var(--ivory);
+  --el-fill-color-lighter: var(--ivory);
+  --el-fill-color-extra-light: var(--ivory);
+  --el-fill-color-dark: #e8e5da;
+  --el-fill-color-darker: #dfdbcf;
+  --el-fill-color-blank: var(--pure-white);
+  --el-mask-color: rgba(20, 20, 19, 0.42);
+  --el-disabled-bg-color: #efede5;
+  --el-disabled-text-color: var(--stone-gray);
+  --el-disabled-border-color: var(--border-cream);
+  --el-switch-on-color: var(--terracotta-brand);
+  --el-switch-off-color: #d9d6cc;
+}
