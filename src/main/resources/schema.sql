@@ -17,10 +17,13 @@ CREATE TABLE IF NOT EXISTS xz_resume (
     user_id BIGINT NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     version VARCHAR(32) NOT NULL,
+    file_sha256 CHAR(64),
+    cache_hit TINYINT(1) NOT NULL DEFAULT 0,
     content LONGTEXT NOT NULL,
     parse_result JSON,
     uploaded_at DATETIME NOT NULL,
     KEY idx_xz_resume_user_id (user_id),
+    KEY idx_xz_resume_file_sha256 (file_sha256),
     KEY idx_xz_resume_uploaded_at (uploaded_at)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
@@ -189,6 +192,57 @@ SET @ddl_sql = (
         ),
         'SELECT 1',
         'ALTER TABLE xz_user MODIFY COLUMN avatar LONGTEXT NOT NULL'
+    )
+);
+PREPARE ddl_stmt FROM @ddl_sql;
+EXECUTE ddl_stmt;
+DEALLOCATE PREPARE ddl_stmt;
+
+SET @ddl_sql = (
+    SELECT IF(
+        EXISTS (
+            SELECT 1
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'xz_resume'
+              AND COLUMN_NAME = 'file_sha256'
+        ),
+        'SELECT 1',
+        'ALTER TABLE xz_resume ADD COLUMN file_sha256 CHAR(64)'
+    )
+);
+PREPARE ddl_stmt FROM @ddl_sql;
+EXECUTE ddl_stmt;
+DEALLOCATE PREPARE ddl_stmt;
+
+SET @ddl_sql = (
+    SELECT IF(
+        EXISTS (
+            SELECT 1
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'xz_resume'
+              AND COLUMN_NAME = 'cache_hit'
+        ),
+        'SELECT 1',
+        'ALTER TABLE xz_resume ADD COLUMN cache_hit TINYINT(1) NOT NULL DEFAULT 0'
+    )
+);
+PREPARE ddl_stmt FROM @ddl_sql;
+EXECUTE ddl_stmt;
+DEALLOCATE PREPARE ddl_stmt;
+
+SET @ddl_sql = (
+    SELECT IF(
+        EXISTS (
+            SELECT 1
+            FROM information_schema.STATISTICS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'xz_resume'
+              AND INDEX_NAME = 'idx_xz_resume_file_sha256'
+        ),
+        'SELECT 1',
+        'ALTER TABLE xz_resume ADD INDEX idx_xz_resume_file_sha256 (file_sha256)'
     )
 );
 PREPARE ddl_stmt FROM @ddl_sql;

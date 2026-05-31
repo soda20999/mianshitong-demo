@@ -9,7 +9,8 @@ import com.mianshitong.project.mapper.ResumeMapper;
 import com.mianshitong.project.service.ResumeService;
 import com.mianshitong.project.util.ResumeDocumentExtractor;
 import java.io.IOException;
-import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -43,18 +44,34 @@ public class ResumeServiceImpl implements ResumeService {
         }
         String fileName = resolveFileName(file.getOriginalFilename());
         validateFileType(fileName);
-        validateFileSignature(file, fileName);
-        String content = resumeDocumentExtractor.extract(file, fileName);
-        if (content.length() > MAX_CONTENT_LENGTH) {
-            content = content.substring(0, MAX_CONTENT_LENGTH);
-        }
+
+        byte[] bytes = readBytes(file);
+        validateFileSignature(bytes, fileName);
+        String fileSha256 = sha256(bytes);
+        ResumePo cachedResume = findParsedByFingerprint(fileSha256, null);
 
         ResumePo resume = new ResumePo();
         resume.setUserId(userId);
         resume.setFileName(fileName);
         resume.setVersion(nextVersion(userId));
-        resume.setContent(content);
+        resume.setFileSha256(fileSha256);
         resume.setUploadedAt(LocalDateTime.now());
+
+        if (cachedResume != null) {
+            resume.setContent(cachedResume.getContent());
+            resume.setParseResult(cachedResume.getParseResult());
+            resume.setCacheHit(true);
+            resumeMapper.insert(resume);
+            return resume;
+        }
+
+        String content = resumeDocumentExtractor.extract(bytes, fileName);
+        if (content.length() > MAX_CONTENT_LENGTH) {
+            content = content.substring(0, MAX_CONTENT_LENGTH);
+        }
+        resume.setContent(content);
+        resume.setCacheHit(false);
+
         aiRateLimitSupport.checkPerMinuteLimit(userId);
         AiCallResult<ResumeParseResultVo> aiResult = springAiEngine.parseResume(content);
         resume.setParseResult(aiResult.data());
@@ -76,9 +93,19 @@ public class ResumeServiceImpl implements ResumeService {
     @Override
     public ResumePo parse(Long userId, Long resumeId) {
         ResumePo resume = requireOwned(userId, resumeId);
+        ResumePo cachedResume = findParsedByFingerprint(resume.getFileSha256(), resume.getId());
+        if (cachedResume != null) {
+            resume.setContent(cachedResume.getContent());
+            resume.setParseResult(cachedResume.getParseResult());
+            resume.setCacheHit(true);
+            resumeMapper.updateById(resume);
+            return resume;
+        }
+
         aiRateLimitSupport.checkPerMinuteLimit(userId);
         AiCallResult<ResumeParseResultVo> aiResult = springAiEngine.parseResume(resume.getContent());
         resume.setParseResult(aiResult.data());
+        resume.setCacheHit(false);
         resumeMapper.updateById(resume);
         aiLogSupport.log(userId, "resume", aiResult.usage(), "SUCCESS");
         return resume;
@@ -124,9 +151,9 @@ public class ResumeServiceImpl implements ResumeService {
         }
     }
 
-    private void validateFileSignature(MultipartFile file, String fileName) {
+    private void validateFileSignature(byte[] bytes, String fileName) {
         String lower = fileName.toLowerCase(Locale.ROOT);
-        byte[] header = readHeader(file, 8);
+        byte[] header = readHeader(bytes, 8);
         if (lower.endsWith(".pdf")) {
             if (!startsWith(header, new byte[] {0x25, 0x50, 0x44, 0x46, 0x2D})) {
                 throw new BizException("PDF 文件头校验失败");
@@ -147,22 +174,14 @@ public class ResumeServiceImpl implements ResumeService {
         }
     }
 
-    private byte[] readHeader(MultipartFile file, int size) {
-        try (InputStream inputStream = file.getInputStream()) {
-            byte[] header = new byte[size];
-            int read = inputStream.read(header);
-            if (read <= 0) {
-                return new byte[0];
-            }
-            if (read == size) {
-                return header;
-            }
-            byte[] actual = new byte[read];
-            System.arraycopy(header, 0, actual, 0, read);
-            return actual;
-        } catch (IOException ex) {
-            throw new BizException("读取文件头失败");
+    private byte[] readHeader(byte[] bytes, int size) {
+        if (bytes == null || bytes.length == 0) {
+            return new byte[0];
         }
+        int read = Math.min(bytes.length, size);
+        byte[] header = new byte[read];
+        System.arraycopy(bytes, 0, header, 0, read);
+        return header;
     }
 
     private boolean startsWith(byte[] source, byte[] prefix) {
@@ -200,5 +219,42 @@ public class ResumeServiceImpl implements ResumeService {
             throw new BizException("简历不存在");
         }
         return resume;
+    }
+
+    private byte[] readBytes(MultipartFile file) {
+        try {
+            return file.getBytes();
+        } catch (IOException ex) {
+            throw new BizException("读取简历文件失败");
+        }
+    }
+
+    private String sha256(byte[] bytes) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(bytes);
+            StringBuilder builder = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                builder.append(String.format("%02x", b));
+            }
+            return builder.toString();
+        } catch (NoSuchAlgorithmException ex) {
+            throw new BizException("文件指纹计算失败");
+        }
+    }
+
+    private ResumePo findParsedByFingerprint(String fileSha256, Long excludeId) {
+        if (fileSha256 == null || fileSha256.isBlank()) {
+            return null;
+        }
+        LambdaQueryWrapper<ResumePo> wrapper = new LambdaQueryWrapper<ResumePo>()
+            .eq(ResumePo::getFileSha256, fileSha256)
+            .isNotNull(ResumePo::getParseResult)
+            .orderByDesc(ResumePo::getUploadedAt);
+        if (excludeId != null) {
+            wrapper.ne(ResumePo::getId, excludeId);
+        }
+        wrapper.last("LIMIT 1");
+        return resumeMapper.selectOne(wrapper);
     }
 }

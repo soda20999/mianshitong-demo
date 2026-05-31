@@ -13,7 +13,7 @@ spring:
   ai:
     openai:
       base-url: ${NVIDIA_OPENAI_BASE_URL:https://api.deepseek.com}
-      api-key: ${NVIDIA_API_KEY:sk-e5c20e4ef1de4a6d9e49d51b48b3e8d2}
+      api-key: ${NVIDIA_API_KEY:}
       chat:
         completions-path: ${NVIDIA_OPENAI_COMPLETIONS_PATH:/chat/completions}
         options:
@@ -31,7 +31,7 @@ mybatis-plus:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:mumu_1234987_&kP9%vL2!zQxR5*jWn8}
+    secret: ${JWT_SECRET:change-me-in-env}
     access-expire-minutes: ${JWT_ACCESS_EXPIRE_MINUTES:15}
     refresh-expire-days: ${JWT_REFRESH_EXPIRE_DAYS:7}
     expire-minutes: 720

@@ -1,6 +1,10 @@
 <template>
   <div class="page-shell resume-page">
-    <section-panel kicker="Resume" title="简历上传与解析" subtitle="支持本地 PDF / Word 简历上传，自动提取文本并解析">
+    <section-panel
+      kicker="Resume"
+      title="简历上传与解析"
+      subtitle="支持 PDF / DOC / DOCX 上传，自动抽取文本并解析"
+    >
       <div class="upload-form ring-card">
         <input
           ref="resumeInputRef"
@@ -19,10 +23,18 @@
             上传并解析
           </el-button>
         </div>
+        <div v-if="uploading || uploadPercent > 0" class="upload-progress">
+          <el-progress :percentage="uploadPercent" :status="uploadStatus" />
+          <p>{{ uploadTip }}</p>
+        </div>
       </div>
     </section-panel>
 
-    <section-panel kicker="Result" title="简历版本管理" subtitle="自动按上传顺序生成版本，支持重新解析与查看详情">
+    <section-panel
+      kicker="Result"
+      title="简历版本管理"
+      subtitle="相同文件会通过 SHA-256 指纹复用历史解析结果，减少重复解析与无效 AI 调用"
+    >
       <div class="version-summary">
         <div class="summary-item ring-card">
           <p>版本数量</p>
@@ -36,8 +48,15 @@
 
       <el-table :data="resumeList" stripe class="version-table">
         <el-table-column prop="fileName" label="文件名" min-width="220" />
-        <el-table-column prop="version" label="版本" width="120" />
-        <el-table-column label="上传时间" min-width="200">
+        <el-table-column prop="version" label="版本" width="100" />
+        <el-table-column label="缓存" width="110">
+          <template #default="{ row }">
+            <el-tag :type="row.cacheHit ? 'success' : 'info'" size="small">
+              {{ row.cacheHit ? "已复用" : "新解析" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="上传时间" min-width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.uploadedAt) }}
           </template>
@@ -79,7 +98,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240">
+        <el-table-column label="操作" width="220">
           <template #default="{ row }">
             <el-button size="small" @click="openDetail(row)">查看详情</el-button>
             <el-button size="small" type="primary" :loading="reparsingId === row.id" @click="reparse(row.id)">
@@ -107,7 +126,7 @@
           <li v-for="item in activeResume.parseResult?.deepDivePoints || []" :key="item">{{ item }}</li>
         </ul>
 
-        <h4>风险项</h4>
+        <h4>风险点</h4>
         <ul>
           <li v-for="item in activeResume.parseResult?.risks || []" :key="item">{{ item }}</li>
         </ul>
@@ -123,6 +142,9 @@ import SectionPanel from "@/components/common/SectionPanel.vue";
 import { listResumesApi, parseResumeApi, uploadResumeApi } from "@/api/resume";
 
 const uploading = ref(false);
+const uploadPercent = ref(0);
+const uploadStatus = ref("");
+const uploadTip = ref("");
 const reparsingId = ref(null);
 const resumeList = ref([]);
 const detailVisible = ref(false);
@@ -179,23 +201,46 @@ function clearSelectedFile() {
 
 async function uploadResume(file) {
   uploading.value = true;
+  uploadPercent.value = 0;
+  uploadStatus.value = "";
+  uploadTip.value = "正在上传文件...";
   try {
-    await uploadResumeApi(file);
-    ElMessage.success("上传成功，已完成解析");
+    const resume = await uploadResumeApi(file, (event) => {
+      if (!event.total) {
+        return;
+      }
+      uploadPercent.value = Math.min(99, Math.round((event.loaded * 100) / event.total));
+      if (uploadPercent.value >= 99) {
+        uploadTip.value = "上传完成，正在抽取文本并解析...";
+      }
+    });
+    uploadPercent.value = 100;
+    uploadStatus.value = "success";
+    uploadTip.value = resume?.cacheHit ? "命中历史解析结果，已跳过重复 AI 调用" : "上传完成，已抽取文本并完成解析";
+    ElMessage.success(resume?.cacheHit ? "已复用历史解析结果" : "上传成功，已完成解析");
     clearSelectedFile();
     await fetchResumes();
   } catch (error) {
+    uploadStatus.value = "exception";
+    uploadTip.value = "上传失败";
     ElMessage.error(error.message);
   } finally {
     uploading.value = false;
+    window.setTimeout(() => {
+      if (!uploading.value) {
+        uploadPercent.value = 0;
+        uploadStatus.value = "";
+        uploadTip.value = "";
+      }
+    }, 1200);
   }
 }
 
 async function reparse(id) {
   reparsingId.value = id;
   try {
-    await parseResumeApi(id);
-    ElMessage.success("解析完成");
+    const resume = await parseResumeApi(id);
+    ElMessage.success(resume?.cacheHit ? "已复用历史解析结果" : "解析完成");
     await fetchResumes();
   } catch (error) {
     ElMessage.error(error.message);
@@ -268,6 +313,16 @@ function formatDateTime(value) {
 
 .upload-actions {
   margin-top: 12px;
+}
+
+.upload-progress {
+  margin-top: 14px;
+}
+
+.upload-progress p {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--olive-gray);
 }
 
 .version-summary {

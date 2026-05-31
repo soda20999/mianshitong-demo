@@ -1,14 +1,14 @@
 spring:
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://192.168.168.128:3306/mianshitong?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/mianshitong?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
     username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:123456}
+    password: ${MYSQL_PASSWORD:}
   sql:
     init:
       mode: always
       encoding: UTF-8
   data:
     redis:
-      host: ${REDIS_HOST:192.168.168.128}
+      host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       database: 0

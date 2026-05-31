@@ -20,10 +20,14 @@ logs/
 target/
 out/
 *.class
+*.jar
+*.war
 .mvn/wrapper/maven-wrapper.jar
 .m2/
 
 # Frontend
+node_modules/
+dist/
 web/node_modules/
 web/dist/
 
@@ -34,5 +38,7 @@ temp/
 
 # Local docs not for public repo
 DESIGN.md
-面试通.md
+面试题.md
 网站效果.md
+完全面试手册.pdf
+*.pdf

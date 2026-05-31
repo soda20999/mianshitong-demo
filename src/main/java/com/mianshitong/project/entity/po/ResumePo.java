@@ -17,6 +17,8 @@ public class ResumePo {
     private Long userId;
     private String fileName;
     private String version;
+    private String fileSha256;
+    private Boolean cacheHit;
     private String content;
     @TableField(typeHandler = JacksonTypeHandler.class)
     private ResumeParseResultVo parseResult;
